@@ -1,20 +1,12 @@
-from datetime import date
 from math import isclose
 
-def BondYTM():
-    valuationDate = date(2021,5,1)
-    couponSchedule = {date(2021,1,1): 0.1, date(2022,1,1): 0.1}
-    sinkingSchedule = {date(2022,1,1): 1}
-    rawPrice = 1
-    commission = 0.006
-    price = rawPrice * (1 + commission)
-
+def BondYTM(valuationDate, price, commission, couponSchedule, sinkingSchedule):
+    price = price * (1 + commission)
     (pastCoupons, coupons) = GetCoupons(couponSchedule, valuationDate)
     (pastSinkings, sinkings) = GetSinkings(sinkingSchedule, valuationDate)
     cashFlows = CalculateCashFlows(coupons, sinkings)
     ytm = CalculateYTM(cashFlows, price)
     return ytm
-
 
 def GetCoupons(couponSchedule, valuationDate):
     (pastCoupons, coupons) = GetFlows(couponSchedule, valuationDate)
@@ -66,5 +58,3 @@ def CalculatePrice(cashFlows, ytm):
         price += value / (1 + ytm)**n
         n += 1
     return price
-
-print(BondYTM())
