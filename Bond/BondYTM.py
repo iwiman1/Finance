@@ -1,3 +1,4 @@
+from sys import float_info as system
 from math import isclose
 
 def BondYTM(valuationDate, price, commission, couponSchedule, sinkingSchedule):
@@ -41,14 +42,36 @@ def CalculateCashFlows(coupons, sinkings):
     return cashFlows
 
 def CalculateYTM(cashFlows, price):
-    ytm = 0.001
+    ytm = 0.0
+    ytmStep = 0.001
+    if (HasNegativeYTM(price, cashFlows)):
+        ytmStep = -ytmStep
+    
+    maxIter = int(1/abs(ytmStep))
+    priceTolerance = 0.0001
     n = 0
-    while (n < 1_000_000):
-        iterationPrice = CalculatePrice(cashFlows, ytm)
-        if (isclose(iterationPrice, price, abs_tol=0.00101)):
-            break
-        ytm += 0.001
+    success = False
+    while (success is False):
+        n += 1
+        if (n == 10): break
+        (success, ytm) = LookForYTM(price, cashFlows, ytmStep, priceTolerance, maxIter)
+        priceTolerance *= 10
     return ytm
+
+def HasNegativeYTM(price, cashFlows):
+    a = abs(price - CalculatePrice(cashFlows, system.epsilon)) > abs(price - CalculatePrice(cashFlows, 0.0))
+    return a
+
+def LookForYTM(price, cashFlows, step, priceTolerance, maxIter):
+    ytm = 0.0
+    success = False
+    for n in range(maxIter):
+        iterationPrice = CalculatePrice(cashFlows, ytm)
+        if (isclose(iterationPrice, price, abs_tol = priceTolerance)):
+            success = True
+            break
+        ytm += step
+    return (success, ytm)
 
 def CalculatePrice(cashFlows, ytm):
     # P = C1 / (1 + YTM)^1 + C2 / (1 + YTM)^2 + ... + Cn / (1 + YTM)^n + FV / (1 + YTM)^n
